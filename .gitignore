@@ -1,0 +1,18 @@
+results/
+calibration/*
+*.log
+
+venv/
+.venv*/
+.python-version
+Pipfile
+Pipfile.lock
+
+# PyCharm project files
+.idea
+
+# Visual Studio Code
+/.vscode/
+
+# python cache folders
+__pycache__/
