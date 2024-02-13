@@ -1,3 +1,4 @@
+import copy
 import os.path
 import time
 from typing import Dict
@@ -90,15 +91,18 @@ class ArucoCalibration:
         if directory is None:
             directory = self.directory
         self.images = search_file_list(directory, '_aruco.jpg')
+        self.images.sort()
 
-    def calibrate(self, directory: str = None):
+    def calibrate(self, fisheye_t, directory: str = None):
         if directory is None:
             directory = self.directory
         images = self.images
+        print(len(images))
         assert len(images) > 0, "Calibration was unsuccessful. No images of charucoboards were found. Add images of " \
                                 "charucoboards and use or alter the naming conventions used in this file."
         img = cv2.imread(images[0])
-        image_size = img.shape[:-1]
+        image_size = img.shape[:2][::-1]
+        img_center = np.array([[[image_size[0] / 2, image_size[1] / 2]]], dtype=np.float32)
         ids_all = []
         for image in images:
             img = cv2.imread(image)
@@ -118,24 +122,40 @@ class ArucoCalibration:
                 markerIds=ids,
                 image=gray,
                 board=self.board)
+            try:
+                if response > 5 or np.isnan(charuco_corners).any():
+                    print(image)
+                    # charuco_corners_undist = copy.deepcopy(charuco_corners)
 
-            if response > 5:
-                print(image)
-                self.img_points.append(charuco_corners)
-                ids_all.append(charuco_ids)
+                    corners_array = charuco_corners
+                    charuco_corners_undist = fisheye_t.spherical2tangent(corners_array) + img_center
 
-                img = aruco.drawDetectedCornersCharuco(
-                    image=img,
-                    charucoCorners=charuco_corners,
-                    charucoIds=charuco_ids)
+                    # centered_x = corners_array[:, 0, 0] - np.mean(corners_array[:, 0, 0])
+                    # charuco_corners_undist[:, 0, 0] = centered_x + image_size[0]/2
+                    self.img_points.append(charuco_corners_undist)
+                    ids_all.append(charuco_ids)
 
-                # proportion = max(img.shape) / 1000.0
-                # img = cv2.resize(img, (int(img.shape[1] / proportion), int(img.shape[0] / proportion)))
-                cv2.imshow('Charuco board', img)
-                cv2.waitKey(0)
-            else:
+                    img = aruco.drawDetectedCornersCharuco(
+                        image=img,
+                        charucoCorners=charuco_corners,
+                        charucoIds=charuco_ids,
+                    )
+
+                    img = aruco.drawDetectedCornersCharuco(
+                        image=img,
+                        charucoCorners=charuco_corners_undist,
+                        charucoIds=charuco_ids,
+                        cornerColor=(1,0,0)
+                    )
+
+                    proportion = max(img.shape) / 1000.0
+                    img = cv2.resize(img, (int(img.shape[1] / proportion), int(img.shape[0] / proportion)))
+                    cv2.imshow('Charuco board', img)
+                    cv2.waitKey(0)
+            except:
                 print("Not able to detect a charuco board in image: {}".format(image))
-
+        cv2.destroyAllWindows()
+        print(len(self.img_points))
         # Now that we've seen all of our images, perform the camera calibration
         # based on the set of points we've discovered
         ret, camera_matrix, distortion_coefficients, rvecs, tvecs = aruco.calibrateCameraCharuco(
@@ -217,7 +237,7 @@ class CircleGridCalibration:
         assert len(images) < 1, "Calibration was unsuccessful. No images of charucoboards were found. Add images of " \
                                 "charucoboards and use or alter the naming conventions used in this file."
         img = cv2.imread(images[0])
-        image_size = img.shape[:-1]
+        image_size = img.shape[:2][::-1]
         for image in images:
             img = cv2.imread(image)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -317,6 +337,10 @@ class FisheyeCalibration:
             self.center_x += 1
         elif k % 256 == 99:  # c
             self.display_polar_circle = not self.display_polar_circle
+        elif k % 256 == 44:  # ,/<
+            self.r_px_length -= 1
+        elif k % 256 == 46:  # ./>
+            self.r_px_length += 1
 
     def auto_calibrate(self, img):
         polar_center, r_px_length = utils.Utils.find_center(img)
@@ -371,4 +395,3 @@ def load_calibration_data(file: str):
         if "cameraParameters_Fisheye.npy" in file:
             fisheye_dict: Dict = np_array.item()
             return fisheye_dict['image_size'], fisheye_dict['polar_center'], fisheye_dict['r_px_length']
-

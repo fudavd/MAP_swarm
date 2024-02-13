@@ -12,9 +12,9 @@ def search_file_list(rootname, file_name):
                 file_list.append(os.path.join(root, file))
     return file_list
 
-def euler_decom(rvec, tvec):
+def euler_decom(rvec):
     rmat = cv2.Rodrigues(rvec)[0]
-    proj = np.hstack((rmat, tvec.T))
+    proj = np.hstack((rmat, np.array([[1, 1, 1]]).T))
     euler_angles_radians = -cv2.decomposeProjectionMatrix(proj)[6] / 180 * np.pi
     return euler_angles_radians
 
@@ -60,3 +60,18 @@ def find_center(img):
     print(f"Center: {int(x_center), int(y_center)}, radius: {int(radius_est)}\n"
           f"Error sum: {residu_1} | STD: {Ri_1.std()}, N={len(x)}")
     return (int(x_center), int(y_center)), int(radius_est)
+
+def rotationMatrixToEulerAngles(R):
+    sy = np.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
+    singular = sy < 1e-6
+
+    if not singular:
+        x = np.arctan2(R[2, 1], R[2, 2])
+        y = np.arctan2(-R[2, 0], sy)
+        z = np.arctan2(R[1, 0], R[0, 0])
+    else:
+        x = np.arctan2(-R[1, 2], R[1, 1])
+        y = np.arctan2(-R[2, 0], sy)
+        z = 0
+
+    return np.array([x, y, z])

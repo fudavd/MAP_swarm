@@ -1,14 +1,16 @@
+import os
+
 from cv2 import aruco
+import cv2
 import numpy as np
 
 
 def aruco_board():
     aruco_dict = aruco_dictionary()
-    board_width = 7
-    board_height = 5
+    board_width = 5
+    board_height = 7
     square_size = 0.042
     marker_size = 0.021
-    aruco_marker_length = 0.05
     return board_width, board_height, square_size, marker_size, aruco_dict
 
 def aruco_dictionary():
@@ -21,7 +23,9 @@ def aruco_detector_parameters():
     aruco_parameters.adaptiveThreshWinSizeMax = 60
     return aruco_parameters
 
-def aruco_cube():
+def aruco_cube(id_list=None):
+    if id_list is None:
+        id_list = [0, 1, 2, 3, 4, 5]
     aruco_dict = aruco_dictionary()
     cube_corners = [
         np.array([[0.0075, 0.0, 0.0575], [0.0575, 0.0, 0.0575], [0.0575, 0.0, 0.0075], [0.0075, 0.0, 0.0075]],
@@ -37,6 +41,36 @@ def aruco_cube():
         np.array([[0.0575, 0.0075, 0.0], [0.0575, 0.0575, 0.0], [0.0075, 0.0575, 0.0], [0.0075, 0.0075, 0.0]],
                  dtype=np.float32)
         ]
-    cube_ids = np.array([[0, 1, 2, 3, 4, 5]], dtype=np.int32)
+    cube_ids = np.array([id_list], dtype=np.int32)
     cube_board = aruco.Board_create(cube_corners, aruco_dict, cube_ids)
     return cube_board
+
+def create_cube_markers(aruco_dict, id_list, dir: str='./marker_dir/', verbose=False):
+    # id_list = np.arange(6*5).reshape((5,6)).tolist()
+
+    # Set the size of the output marker image
+    marker_size = 200
+
+    for ind, cube_ids in enumerate(id_list):
+        cube_path = os.path.join(dir, str(ind+1))
+        os.makedirs(cube_path, exist_ok=True)
+        # Specify IDs for the six markers
+        marker_ids = cube_ids
+
+        # Draw and save each marker
+        for marker_id in marker_ids:
+            marker = aruco.drawMarker(aruco_dict, marker_id, marker_size)
+            marker_image = np.ones((marker_size, marker_size), dtype=np.uint8) * 255
+            marker_image[:marker.shape[0], :marker.shape[1]] = marker
+
+            # Save the marker image
+            marker_filename = os.path.join(cube_path, f"marker_{marker_id}.png")
+            print(marker_filename)
+            cv2.imwrite(marker_filename, marker_image)
+
+            if verbose:
+                # Display the marker
+                cv2.imshow(f'Marker {marker_id}', marker_image)
+                cv2.waitKey(500)  # Wait for 500 milliseconds between markers
+        cv2.destroyAllWindows()
+
