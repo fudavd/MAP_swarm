@@ -10,7 +10,7 @@ from utils.Transform import tan_y_map
 if __name__ == "__main__":
     cv2.namedWindow("360 cam")
     cam = cv2.VideoCapture(0)
-    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1024)
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 768)
     cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1024)
 
     # %% fisheye calibration
@@ -42,7 +42,7 @@ if __name__ == "__main__":
                                                    directory='./calibration')
 
     aruco_param_file = os.path.join('./calibration', 'cameraParameters_aruco.xml')
-    if True or not os.path.isfile(aruco_param_file):
+    if not os.path.isfile(aruco_param_file):
         while True:
             ret, frame = cam.read()
             if ret:

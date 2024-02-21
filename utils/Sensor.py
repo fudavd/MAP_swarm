@@ -64,7 +64,7 @@ class ArucoFisheyePose:
                                                               self.dist_coeffs)
 
             for i in range(len(ids)):
-                aruco.drawAxis(img, cam_mat, self.dist_coeffs, rvecs[i], tvecs[i], self.aruco_marker_length)
+                # aruco.drawAxis(img, cam_mat, self.dist_coeffs, rvecs[i], tvecs[i], self.aruco_marker_length)
                 aruco.drawDetectedMarkers(img, corners)
 
             rel_angles = np.zeros((len(ids), 1))

@@ -10,8 +10,8 @@ def aruco_board():
     aruco_dict = aruco_dictionary()
     board_width = 5
     board_height = 7
-    square_size = 0.042
-    marker_size = 0.021
+    square_size = 0.021
+    marker_size = 0.016
     return board_width, board_height, square_size, marker_size, aruco_dict
 
 def aruco_dictionary():
