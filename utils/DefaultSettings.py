@@ -1,3 +1,4 @@
+import itertools
 import os
 
 from cv2 import aruco
@@ -16,6 +17,14 @@ def aruco_board():
 def aruco_dictionary():
     aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
     return aruco_dict
+
+def cube_dictionary():
+    bit_list = list(itertools.product([0, 1], repeat=9))
+    aruco_dict = aruco.custom_dictionary(0, 3, 1)
+    aruco_dict.bytesList = np.empty(shape=(2**9, 2, 4), dtype=np.uint8)
+    for ind, bit in enumerate(bit_list):
+        mybits = np.array(bit, dtype=np.uint8).reshape((3,3))
+        aruco_dict.bytesList[ind] = aruco.Dictionary_getByteListFromBits(mybits)
 
 def aruco_detector_parameters():
     aruco_parameters = aruco.DetectorParameters_create()

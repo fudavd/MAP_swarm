@@ -82,7 +82,7 @@ class FourDirSensor():
                         data, id = future.result()
                         print(data, id)
                         # print(frame.shape, img.shape, id, (int(id*self.slice_width), int((id+1)*self.slice_width)))
-                        cv2.imshow(f"dir:{id}", frame)
+                        cv2.imshow(f"dir:{id}", frame[:, int(id*self.slice_width):int((id+2)*self.slice_width)])
                     cv2.waitKey(1)
                     end_time_t = time.time()
                     sample_time.append(end_time_t-self.start_t)
